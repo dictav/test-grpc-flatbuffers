@@ -1,0 +1,10 @@
+namespace hello;
+
+table Message {
+  name: string;
+  text: string;
+}
+
+rpc_service Greeter {
+  Hello(Message): Message;
+}
