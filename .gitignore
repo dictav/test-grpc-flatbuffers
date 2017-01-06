@@ -1,6 +1,2 @@
 client
 server
-hello/*
-hello_generated.h
-hello.grpc.fb.cc
-hello.grpc.fb.h
