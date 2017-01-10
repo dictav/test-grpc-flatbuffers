@@ -4,7 +4,6 @@
 
 #include "hello_generated.h"
 #include "hello.grpc.fb.h"
-#include "flatbuffers/grpc.h"
 
 #include <grpc++/impl/codegen/async_stream.h>
 #include <grpc++/impl/codegen/async_unary_call.h>
@@ -14,10 +13,11 @@
 #include <grpc++/impl/codegen/rpc_service_method.h>
 #include <grpc++/impl/codegen/service_type.h>
 #include <grpc++/impl/codegen/sync_stream.h>
+
 namespace hello {
 
 static const char* Greeter_method_names[] = {
-  "/hello..Greeter/Hello",
+  "/hello.Greeter/Hello",
 };
 
 std::unique_ptr< Greeter::Stub> Greeter::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {

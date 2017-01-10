@@ -5,10 +5,10 @@
 #define GRPC_hello__INCLUDED
 
 #include "hello_generated.h"
+#include "flatbuffers/grpc.h"
 
 #include <grpc++/impl/codegen/async_stream.h>
 #include <grpc++/impl/codegen/async_unary_call.h>
-#include <grpc++/impl/codegen/proto_utils.h>
 #include <grpc++/impl/codegen/rpc_method.h>
 #include <grpc++/impl/codegen/service_type.h>
 #include <grpc++/impl/codegen/status.h>
