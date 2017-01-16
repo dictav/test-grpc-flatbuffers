@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/dictav/test-grpc+flatbuffers/hello"
+	"github.com/dictav/test-grpc-flatbuffers/hello"
 	"github.com/google/flatbuffers/go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
