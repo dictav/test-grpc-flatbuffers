@@ -37,6 +37,25 @@ class GreeterClient {
       return strm.str();
     }
 
+    string HelloHello(const string& name, const string& text) {
+      auto request = buildMessage(name, text);
+
+      ClientContext context;
+      auto reader = stub_->HelloHello(&context, request); 
+
+      ostringstream strm;
+      flatbuffers::BufferRef<Message> reply;
+      while (reader->Read(&reply)) {
+        strm << "=> " << reply.GetRoot()->text()->str() << " From " << reply.GetRoot()->name()->str() << endl;
+      }
+      Status status = reader->Finish();
+      if (!status.ok()) {
+        strm << "=> Error: code=" << status.error_code() << ", desc=" << status.error_message();
+      }
+
+      return strm.str();
+    }
+
   private:
     unique_ptr<hello::Greeter::Stub> stub_;
 
@@ -53,12 +72,16 @@ class GreeterClient {
 int main(int argc, char** argv) {
   GreeterClient hello(grpc::CreateChannel("localhost:9090", grpc::InsecureChannelCredentials()));
 
-	cout << "Say hello From dictav" << endl;
+  cout << "Say hello From dictav" << endl;
   string reply = hello.Hello("dictav", "hello");
   cout <<  reply << endl;
 
-	cout << "Say hello From dictav" << endl;
+  cout << "Say hello From dictav" << endl;
   reply = hello.Hello("dictav", "goodbye");
+  cout <<  reply << endl;
+
+  cout << "Say hello From dictav (HelloHello)" << endl;
+  reply = hello.HelloHello("dictav", "hello");
   cout <<  reply << endl;
 
   return 0;

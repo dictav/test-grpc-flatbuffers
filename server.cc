@@ -7,6 +7,7 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+using grpc::ServerWriter;
 using hello::Message;
 using hello::Greeter;
 
@@ -28,6 +29,34 @@ class GreeterServiceImpl final : public hello::Greeter::Service {
     fbb.Finish(msg_offset);
 
     *reply = flatbuffers::BufferRef<Message>(fbb.GetBufferPointer(), fbb.GetSize());
+
+    return Status::OK;
+  }
+
+  Status HelloHello(ServerContext* context,
+      const flatbuffers::BufferRef<Message>* request,
+      ServerWriter<flatbuffers::BufferRef<Message>>* writer)
+      override {
+    if (request->GetRoot()->text()->str() != "hello") {
+      return Status(grpc::INVALID_ARGUMENT, "A text should be 'hello'");
+    }
+
+    // Build a reply with the name and the text.
+    flatbuffers::FlatBufferBuilder fbb;
+    auto msg_offset = hello::CreateMessage(fbb,
+        fbb.CreateString("GreeterService"),
+        fbb.CreateString("HELLO " + request->GetRoot()->name()->str() + "!")
+        );
+    fbb.Finish(msg_offset);
+
+    auto reply = flatbuffers::BufferRef<Message>(fbb.GetBufferPointer(), fbb.GetSize());
+
+    if (!writer->Write(reply)) {
+      return Status(grpc::INTERNAL, "could not write message");
+    }
+    if (!writer->Write(reply)) {
+      return Status(grpc::INTERNAL, "could not write message");
+    }
 
     return Status::OK;
   }
