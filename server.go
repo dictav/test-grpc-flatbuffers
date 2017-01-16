@@ -17,11 +17,7 @@ type helloService struct{}
 
 var message = []byte("hello")
 
-func (h *helloService) Hello(ctx context.Context, in *hello.Message) (*flatbuffers.Builder, error) {
-	if !bytes.Equal(in.Text(), message) {
-		return nil, grpc.Errorf(codes.InvalidArgument, "A text should be 'hello'")
-	}
-
+func buildMessage(in *hello.Message) *flatbuffers.Builder {
 	b := flatbuffers.NewBuilder(0)
 	ns := b.CreateString("GreeterService")
 	ts := b.CreateString(fmt.Sprintf("HELLO %s!", in.Name()))
@@ -30,7 +26,26 @@ func (h *helloService) Hello(ctx context.Context, in *hello.Message) (*flatbuffe
 	hello.MessageAddText(b, ts)
 	b.Finish(hello.MessageEnd(b))
 
-	return b, nil
+	return b
+}
+
+func (h *helloService) Hello(ctx context.Context, in *hello.Message) (*flatbuffers.Builder, error) {
+	if !bytes.Equal(in.Text(), message) {
+		return nil, grpc.Errorf(codes.InvalidArgument, "A text should be 'hello'")
+	}
+
+	return buildMessage(in), nil
+}
+
+func (h *helloService) HelloHello(in *hello.Message, stream hello.Greeter_HelloHelloServer) error {
+	if !bytes.Equal(in.Text(), message) {
+		return grpc.Errorf(codes.InvalidArgument, "A text should be 'hello'")
+	}
+
+	stream.Send(buildMessage(in))
+	stream.Send(buildMessage(in))
+
+	return nil
 }
 
 func serve() {

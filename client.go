@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 
 	"github.com/dictav/test-grpc-flatbuffers/hello"
@@ -28,9 +29,18 @@ func printReply(reply *hello.Message, err error) {
 		d := grpc.ErrorDesc(err)
 		if c != codes.Unknown {
 			log.Printf("=> Error: code=%d(%s), desc=%s\n", c, c, d)
-		} else {
+			return
+		}
+
+		if err != io.EOF {
 			log.Println("=> Error: not rpc error=", err)
 		}
+
+		return
+	}
+
+	if reply == nil {
+		log.Println("=> Unexpected Error: message is nil")
 		return
 	}
 
@@ -54,4 +64,17 @@ func main() {
 	log.Println("Say goodbye From dictav")
 	rep, err = client.Hello(ctx, buildMessage("dictav", "goodbye"))
 	printReply(rep, err)
+
+	log.Println("Say hello From dictav (HelloHello)")
+	strm, err := client.HelloHello(ctx, buildMessage("dictav", "hello"))
+	if err != nil {
+		printReply(nil, err)
+	}
+	for {
+		rep, err = strm.Recv()
+		printReply(rep, err)
+		if err != nil {
+			break
+		}
+	}
 }
