@@ -18,6 +18,7 @@ namespace hello {
 
 static const char* Greeter_method_names[] = {
   "/hello.Greeter/Hello",
+  "/hello.Greeter/HelloHello",
 };
 
 std::unique_ptr< Greeter::Stub> Greeter::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -27,6 +28,7 @@ std::unique_ptr< Greeter::Stub> Greeter::NewStub(const std::shared_ptr< ::grpc::
 
 Greeter::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
   : channel_(channel)  , rpcmethod_Hello_(Greeter_method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_HelloHello_(Greeter_method_names[1], ::grpc::RpcMethod::SERVER_STREAMING, channel)
   {}
   
 ::grpc::Status Greeter::Stub::Hello(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, flatbuffers::BufferRef<Message>* response) {
@@ -37,6 +39,14 @@ Greeter::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
   return new ::grpc::ClientAsyncResponseReader< flatbuffers::BufferRef<Message>>(channel_.get(), cq, rpcmethod_Hello_, context, request);
 }
 
+::grpc::ClientReader< flatbuffers::BufferRef<Message>>* Greeter::Stub::HelloHelloRaw(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request) {
+  return new ::grpc::ClientReader< flatbuffers::BufferRef<Message>>(channel_.get(), rpcmethod_HelloHello_, context, request);
+}
+
+::grpc::ClientAsyncReader< flatbuffers::BufferRef<Message>>* Greeter::Stub::AsyncHelloHelloRaw(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq, void* tag) {
+  return new ::grpc::ClientAsyncReader< flatbuffers::BufferRef<Message>>(channel_.get(), cq, rpcmethod_HelloHello_, context, request, tag);
+}
+
 Greeter::Service::Service() {
   (void)Greeter_method_names;
   AddMethod(new ::grpc::RpcServiceMethod(
@@ -44,6 +54,11 @@ Greeter::Service::Service() {
       ::grpc::RpcMethod::NORMAL_RPC,
       new ::grpc::RpcMethodHandler< Greeter::Service, flatbuffers::BufferRef<Message>, flatbuffers::BufferRef<Message>>(
           std::mem_fn(&Greeter::Service::Hello), this)));
+  AddMethod(new ::grpc::RpcServiceMethod(
+      Greeter_method_names[1],
+      ::grpc::RpcMethod::SERVER_STREAMING,
+      new ::grpc::ServerStreamingHandler< Greeter::Service, flatbuffers::BufferRef<Message>, flatbuffers::BufferRef<Message>>(
+          std::mem_fn(&Greeter::Service::HelloHello), this)));
 }
 
 Greeter::Service::~Service() {
@@ -53,6 +68,13 @@ Greeter::Service::~Service() {
   (void) context;
   (void) request;
   (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status Greeter::Service::HelloHello(::grpc::ServerContext* context, const flatbuffers::BufferRef<Message>* request, ::grpc::ServerWriter< flatbuffers::BufferRef<Message>>* writer) {
+  (void) context;
+  (void) request;
+  (void) writer;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 

@@ -34,8 +34,16 @@ class Greeter GRPC_FINAL {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< flatbuffers::BufferRef<Message>>> AsyncHello(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< flatbuffers::BufferRef<Message>>>(AsyncHelloRaw(context, request, cq));
     }
+    std::unique_ptr< ::grpc::ClientReaderInterface< flatbuffers::BufferRef<Message>>> HelloHello(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request) {
+      return std::unique_ptr< ::grpc::ClientReaderInterface< flatbuffers::BufferRef<Message>>>(HelloHelloRaw(context, request));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< flatbuffers::BufferRef<Message>>> AsyncHelloHello(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< flatbuffers::BufferRef<Message>>>(AsyncHelloHelloRaw(context, request, cq, tag));
+    }
   private:
     virtual ::grpc::ClientAsyncResponseReaderInterface< flatbuffers::BufferRef<Message>>* AsyncHelloRaw(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderInterface< flatbuffers::BufferRef<Message>>* HelloHelloRaw(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< flatbuffers::BufferRef<Message>>* AsyncHelloHelloRaw(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq, void* tag) = 0;
   };
   class Stub GRPC_FINAL : public StubInterface {
    public:
@@ -44,11 +52,20 @@ class Greeter GRPC_FINAL {
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< flatbuffers::BufferRef<Message>>> AsyncHello(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< flatbuffers::BufferRef<Message>>>(AsyncHelloRaw(context, request, cq));
     }
+    std::unique_ptr< ::grpc::ClientReader< flatbuffers::BufferRef<Message>>> HelloHello(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request) {
+      return std::unique_ptr< ::grpc::ClientReader< flatbuffers::BufferRef<Message>>>(HelloHelloRaw(context, request));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReader< flatbuffers::BufferRef<Message>>> AsyncHelloHello(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< flatbuffers::BufferRef<Message>>>(AsyncHelloHelloRaw(context, request, cq, tag));
+    }
   
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
     ::grpc::ClientAsyncResponseReader< flatbuffers::BufferRef<Message>>* AsyncHelloRaw(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq) GRPC_OVERRIDE;
+    ::grpc::ClientReader< flatbuffers::BufferRef<Message>>* HelloHelloRaw(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request) GRPC_OVERRIDE;
+    ::grpc::ClientAsyncReader< flatbuffers::BufferRef<Message>>* AsyncHelloHelloRaw(::grpc::ClientContext* context, const flatbuffers::BufferRef<Message>& request, ::grpc::CompletionQueue* cq, void* tag) GRPC_OVERRIDE;
     const ::grpc::RpcMethod rpcmethod_Hello_;
+    const ::grpc::RpcMethod rpcmethod_HelloHello_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
   
@@ -57,6 +74,7 @@ class Greeter GRPC_FINAL {
     Service();
     virtual ~Service();
     virtual ::grpc::Status Hello(::grpc::ServerContext* context, const flatbuffers::BufferRef<Message>* request, flatbuffers::BufferRef<Message>* response);
+    virtual ::grpc::Status HelloHello(::grpc::ServerContext* context, const flatbuffers::BufferRef<Message>* request, ::grpc::ServerWriter< flatbuffers::BufferRef<Message>>* writer);
   };
   template <class BaseClass>
   class WithAsyncMethod_Hello : public BaseClass {
@@ -78,7 +96,27 @@ class Greeter GRPC_FINAL {
       ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  typedef   WithAsyncMethod_Hello<  Service   >   AsyncService;
+  template <class BaseClass>
+  class WithAsyncMethod_HelloHello : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithAsyncMethod_HelloHello() {
+      ::grpc::Service::MarkMethodAsync(1);
+    }
+    ~WithAsyncMethod_HelloHello() GRPC_OVERRIDE {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status HelloHello(::grpc::ServerContext* context, const flatbuffers::BufferRef<Message>* request, ::grpc::ServerWriter< flatbuffers::BufferRef<Message>>* writer) GRPC_FINAL GRPC_OVERRIDE {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestHelloHello(::grpc::ServerContext* context, flatbuffers::BufferRef<Message>* request, ::grpc::ServerAsyncWriter< flatbuffers::BufferRef<Message>>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncServerStreaming(1, context, request, writer, new_call_cq, notification_cq, tag);
+    }
+  };
+  typedef   WithAsyncMethod_Hello<  WithAsyncMethod_HelloHello<  Service   >   >   AsyncService;
   template <class BaseClass>
   class WithGenericMethod_Hello : public BaseClass {
    private:
@@ -92,6 +130,23 @@ class Greeter GRPC_FINAL {
     }
     // disable synchronous version of this method
     ::grpc::Status Hello(::grpc::ServerContext* context, const flatbuffers::BufferRef<Message>* request, flatbuffers::BufferRef<Message>* response) GRPC_FINAL GRPC_OVERRIDE {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_HelloHello : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithGenericMethod_HelloHello() {
+      ::grpc::Service::MarkMethodGeneric(1);
+    }
+    ~WithGenericMethod_HelloHello() GRPC_OVERRIDE {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status HelloHello(::grpc::ServerContext* context, const flatbuffers::BufferRef<Message>* request, ::grpc::ServerWriter< flatbuffers::BufferRef<Message>>* writer) GRPC_FINAL GRPC_OVERRIDE {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }

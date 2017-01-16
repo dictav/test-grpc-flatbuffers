@@ -7,4 +7,5 @@ table Message {
 
 rpc_service Greeter {
   Hello(Message): Message;
+  HelloHello(Message): Message (streaming: "server");
 }

@@ -15,6 +15,8 @@ import (
 type GreeterClient interface{
   Hello(ctx context.Context, in *flatbuffers.Builder, 
   	opts... grpc.CallOption) (* Message, error)  
+  HelloHello(ctx context.Context, in *flatbuffers.Builder, 
+  	opts... grpc.CallOption) (Greeter_HelloHelloClient, error)  
 }
 
 type greeterClient struct {
@@ -33,9 +35,35 @@ func (c *greeterClient) Hello(ctx context.Context, in *flatbuffers.Builder,
   return out, nil
 }
 
+func (c *greeterClient) HelloHello(ctx context.Context, in *flatbuffers.Builder, 
+	opts... grpc.CallOption) (Greeter_HelloHelloClient, error) {
+  stream, err := grpc.NewClientStream(ctx, &_Greeter_serviceDesc.Streams[0], c.cc, "/hello.Greeter/HelloHello", opts...)
+  if err != nil { return nil, err }
+  x := &greeterHelloHelloClient{stream}
+  if err := x.ClientStream.SendMsg(in); err != nil { return nil, err }
+  if err := x.ClientStream.CloseSend(); err != nil { return nil, err }
+  return x,nil
+}
+
+type Greeter_HelloHelloClient interface {
+  Recv() (*Message, error)
+  grpc.ClientStream
+}
+
+type greeterHelloHelloClient struct{
+  grpc.ClientStream
+}
+
+func (x *greeterHelloHelloClient) Recv() (*Message, error) {
+  m := new(Message)
+  if err := x.ClientStream.RecvMsg(m); err != nil { return nil, err }
+  return m, nil
+}
+
 // Server API for Greeter service
 type GreeterServer interface {
   Hello(context.Context, *Message) (*flatbuffers.Builder, error)  
+  HelloHello(*Message, Greeter_HelloHelloServer) error  
 }
 
 func RegisterGreeterServer(s *grpc.Server, srv GreeterServer) {
@@ -59,6 +87,26 @@ func _Greeter_Hello_Handler(srv interface{}, ctx context.Context,
 }
 
 
+func _Greeter_HelloHello_Handler(srv interface{}, stream grpc.ServerStream) error {
+  m := new(Message)
+  if err := stream.RecvMsg(m); err != nil { return err }
+  return srv.(GreeterServer).HelloHello(m, &greeterHelloHelloServer{stream})
+}
+
+type Greeter_HelloHelloServer interface { 
+  Send(* flatbuffers.Builder) error
+  grpc.ServerStream
+}
+
+type greeterHelloHelloServer struct {
+  grpc.ServerStream
+}
+
+func (x *greeterHelloHelloServer) Send(m *flatbuffers.Builder) error {
+  return x.ServerStream.SendMsg(m)
+}
+
+
 var _Greeter_serviceDesc = grpc.ServiceDesc{
   ServiceName: "hello.Greeter",
   HandlerType: (*GreeterServer)(nil),
@@ -69,6 +117,11 @@ var _Greeter_serviceDesc = grpc.ServiceDesc{
     },
   },
   Streams: []grpc.StreamDesc{
+    {
+      StreamName: "HelloHello",
+      Handler: _Greeter_HelloHello_Handler, 
+      ServerStreams: true,
+    },
   },
 }
 
